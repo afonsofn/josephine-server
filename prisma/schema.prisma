@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  online
+  offline
+}
+
+enum MessageStatus {
+  sent
+  received
+  readed
+}
+
+model User {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email String? @unique
+  phoneNumber String? @unique
+  hash String
+  firstName String
+  lastName String
+  nickname String @unique
+  provider String?
+  imageUrl String?
+  verified Boolean
+
+  status UserStatus @default(offline)
+
+  contacts Contact[] @relation("UserToContact")
+  contactOf Contact[] @relation("ContactToUser")
+
+  sentMessages Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+
+  groupMemberships GroupMember[]
+  sentGroupMessages GroupMessage[]
+
+  @@map("users")
+}
+
+model Contact {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId String
+  contactId String
+  messages Message[]
+
+  user User @relation("UserToContact", fields: [userId], references: [id])
+  contact User @relation("ContactToUser", fields: [contactId], references: [id])
+
+  @@unique([userId, contactId])
+  @@map("contacts")
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content String
+  senderId String
+  receiverId String
+  contactId Int
+  groupId Int?
+
+  status MessageStatus @default(sent)
+
+  sender User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+  contact Contact @relation(fields: [contactId], references: [id])
+
+  @@map("messages")
+}
+
+model Group {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name String
+  description String
+  imageUrl String?
+
+  members GroupMember[]
+  messages GroupMessage[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id Int @id @default(autoincrement())
+  groupId Int
+  userId String
+  isAdmin Boolean @default(false)
+
+  group Group @relation(fields: [groupId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupMessage {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content String
+  senderId String
+  groupId Int
+
+  sender User @relation(fields: [senderId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@map("group_messages")
+}
+
+

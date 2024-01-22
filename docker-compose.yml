@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:13
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - josephine-network
+  redis-cache:
+    container_name: redis-cache
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - josephine-network
+networks:
+  josephine-network:
